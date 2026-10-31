@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+.venv/
+venv/
+models/*.task
+data/raw_videos/*
+!data/raw_videos/README.md
+data/recordings/*
+!data/recordings/contoh_gerak_sintetis.json
+viewer/avatars/*.vrm
+.DS_Store

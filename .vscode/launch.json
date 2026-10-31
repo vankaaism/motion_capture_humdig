@@ -1,0 +1,49 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "TariCap: webcam",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/capture/main.py",
+      "cwd": "${workspaceFolder}",
+      "args": ["--mirror"],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "TariCap: webcam + live ke viewer",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/capture/main.py",
+      "cwd": "${workspaceFolder}",
+      "args": ["--mirror", "--ws"],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "TariCap: rekam dari file video",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/capture/main.py",
+      "cwd": "${workspaceFolder}",
+      "args": ["--source", "${input:videoPath}", "--record"],
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "TariCap: batch folder video",
+      "type": "debugpy",
+      "request": "launch",
+      "program": "${workspaceFolder}/tools/batch_extract.py",
+      "cwd": "${workspaceFolder}",
+      "args": ["data/raw_videos", "data/recordings/batch"],
+      "console": "integratedTerminal"
+    }
+  ],
+  "inputs": [
+    {
+      "id": "videoPath",
+      "type": "promptString",
+      "description": "Path file video (relatif dari folder proyek)",
+      "default": "data/raw_videos/contoh.mp4"
+    }
+  ]
+}

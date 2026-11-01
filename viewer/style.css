@@ -1,0 +1,236 @@
+:root {
+  --bg: #f4f1ea;
+  --panel: #fffdf8;
+  --ink: #1f1b16;
+  --muted: #6d655b;
+  --line: #ddd5c8;
+  --accent: #a4462b;   /* merah bata, terinspirasi warna kain tari */
+  --accent-ink: #ffffff;
+  --rec: #ef4444;
+
+  /* Panggung (dua panel demo) selalu gelap supaya cyan, magenta, kuning menonjol. */
+  --stage-bg: #07080b;
+  --capture-bg: #0b0d12;
+  --avatar-bg: #161920;
+  --stage-ink: #f1f5f9;
+  --stage-muted: #94a3b8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #15130f;
+    --panel: #1e1b16;
+    --ink: #eee8de;
+    --muted: #a39a8d;
+    --line: #36312a;
+    --accent: #d06a4a;
+  }
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  height: 100vh;
+  height: 100dvh;
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  grid-template-areas: "panel stage";
+  background: var(--bg);
+  color: var(--ink);
+  font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+/* ---------- Panel samping ---------- */
+#panel {
+  grid-area: panel;
+  background: var(--panel);
+  border-right: 1px solid var(--line);
+  padding: 20px 18px;
+  overflow-y: auto;
+}
+
+h1 { margin: 0; font-size: 22px; letter-spacing: -0.01em; }
+.sub { margin: 4px 0 0; color: var(--muted); }
+h2 {
+  margin: 0 0 10px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+section { padding: 16px 0; border-top: 1px solid var(--line); }
+header { padding-bottom: 16px; }
+
+button, select, input[type="text"], #wsUrl, .file {
+  font: inherit;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 7px 10px;
+}
+select { background: var(--panel); }
+
+button { cursor: pointer; }
+button:hover:not(:disabled), .file:hover { border-color: var(--accent); }
+button:focus-visible, select:focus-visible, input:focus-visible, .file:focus-within {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+button:disabled { opacity: 0.45; cursor: default; }
+#btnPlay:not(:disabled), button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+button.primary.active { background: transparent; color: var(--ink); border-color: var(--line); }
+
+#btnCamera, #btnSample, #btnRecord, #cameraSelect, .file {
+  display: block; width: 100%; margin-bottom: 8px; text-align: left; cursor: pointer;
+}
+.file input { display: none; }
+[hidden] { display: none !important; }
+
+button.record { display: flex; align-items: center; gap: 8px; }
+button.record .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--rec); }
+button.record kbd { margin-left: auto; }
+button.record.active { border-color: var(--rec); color: var(--rec); }
+button.record.active .dot { border-radius: 2px; }
+
+.row { display: flex; gap: 8px; align-items: center; margin-bottom: 8px; flex-wrap: wrap; }
+.row > select { flex: 1; min-width: 0; }
+#wsUrl { flex: 1; min-width: 0; font-family: ui-monospace, monospace; font-size: 12px; }
+.inline { color: var(--muted); font-size: 13px; }
+
+.check { display: flex; gap: 6px; align-items: center; margin: 6px 0; cursor: pointer; }
+#seek, #refine { width: 100%; accent-color: var(--accent); }
+.ticks { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin: -2px 2px 6px; }
+.mono { font-family: ui-monospace, "SF Mono", Consolas, monospace; font-size: 12px; color: var(--muted); white-space: pre-wrap; }
+#status.error { color: var(--rec); }
+.hint { margin: 6px 0 0; font-size: 12px; color: var(--muted); }
+code { font-size: 11px; }
+
+kbd {
+  font: 11px ui-monospace, "SF Mono", Consolas, monospace;
+  border: 1px solid var(--line);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  padding: 0 5px;
+  color: var(--muted);
+}
+
+.joints { display: grid; grid-template-columns: 1fr 1fr; gap: 0 8px; margin-bottom: 6px; }
+.joints .swatch { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+
+.keys dl { display: grid; grid-template-columns: auto 1fr; gap: 4px 10px; margin: 0; font-size: 13px; }
+.keys dd { margin: 0; color: var(--muted); }
+
+/* ---------- Panggung: dua panel ---------- */
+#stage {
+  grid-area: stage;
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 2px;
+  background: var(--stage-bg);
+  color: var(--stage-ink);
+}
+
+.panel {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+#panelCapture { background: var(--capture-bg); }
+#panelAvatar { background: var(--avatar-bg); }
+
+.panel-body { position: relative; flex: 1; min-height: 0; }
+.panel-body canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+#avatarMount canvas { touch-action: none; }
+
+/* Mode fokus satu panel (untuk proyektor kecil). Gambar/video komposit tetap berisi dua panel. */
+#stage[data-view="capture"], #stage[data-view="avatar"] { grid-template-columns: minmax(0, 1fr); }
+#stage[data-view="capture"] #panelAvatar,
+#stage[data-view="avatar"] #panelCapture { display: none; }
+
+.panel-label {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 7px 12px 7px 8px;
+  border-radius: 10px;
+  background: rgba(10, 12, 16, 0.72);
+  backdrop-filter: blur(6px);
+  font-size: clamp(15px, 1.4vw, 20px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  pointer-events: none;
+}
+.panel-label .num {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5em;
+  height: 1.5em;
+  border-radius: 6px;
+  background: var(--stage-ink);
+  color: #0b0d12;
+  font-size: 0.85em;
+  align-self: center;
+}
+.panel-label .sub { font-size: 0.68em; font-weight: 400; color: var(--stage-muted); margin: 0; }
+
+.panel-caption {
+  flex: none;
+  padding: 7px 14px;
+  font: 12px/1.4 ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.035);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rec-badge {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: rgba(127, 29, 29, 0.85);
+  color: #fff;
+  font: 600 14px/1 ui-monospace, "SF Mono", Menlo, monospace;
+  letter-spacing: 0.06em;
+  pointer-events: none;
+}
+.rec-badge[hidden] { display: none; }
+.rec-badge .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--rec); animation: rec 1s steps(2, start) infinite; }
+@keyframes rec { to { visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) { .rec-badge .dot { animation: none; } }
+
+#video { position: absolute; width: 1px; height: 1px; opacity: 0; pointer-events: none; }
+
+/* ---------- Layar sempit: panel ditumpuk vertikal ---------- */
+@media (max-width: 1000px) {
+  #stage[data-view="split"] { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) minmax(0, 1fr); }
+}
+@media (max-width: 760px) {
+  body {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "stage" "panel";
+    grid-template-rows: auto auto;
+    height: auto;
+  }
+  #stage { height: 92vh; height: 92dvh; }
+  #panel { border-right: none; border-top: 1px solid var(--line); padding: 16px; }
+  .panel-label { top: 10px; left: 10px; }
+}

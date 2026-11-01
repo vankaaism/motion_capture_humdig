@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TariCap Viewer</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="style.css" />
+  <!-- Peta impor: semua library disimpan lokal di folder vendor/, jadi demo tetap jalan tanpa internet.
+       three.js 0.170.0, @pixiv/three-vrm 3.5.5, kalidokit 1.1.5, @mediapipe/tasks-vision 1.2.0 -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three/three.module.min.js",
+        "three/addons/": "./vendor/three/addons/",
+        "@pixiv/three-vrm": "./vendor/three-vrm.module.min.js",
+        "kalidokit": "./vendor/kalidokit.es.js",
+        "@mediapipe/tasks-vision": "./vendor/mediapipe/vision_bundle.mjs"
+      }
+    }
+  </script>
+</head>
+<body>
+  <main id="stage" data-view="split" aria-label="Tampilan demo">
+    <section class="panel" id="panelCapture" aria-label="Panel 1: tangkapan">
+      <div class="panel-body"><canvas id="captureCanvas"></canvas></div>
+      <div class="panel-label"><span class="num">1</span><span>Tangkapan</span><span class="sub">apa yang dilihat komputer</span></div>
+      <div class="rec-badge" id="recBadge" hidden><span class="dot"></span>REC <span id="recTime">0:00</span></div>
+      <div class="panel-caption" id="captionCapture">Belum ada sumber gerak</div>
+    </section>
+    <section class="panel" id="panelAvatar" aria-label="Panel 2: animasi halus">
+      <div class="panel-body" id="avatarMount"></div>
+      <div class="panel-label"><span class="num">2</span><span>Animasi halus</span><span class="sub">gerak setelah penghalusan</span></div>
+      <div class="panel-caption" id="captionAvatar">Memuat avatar ...</div>
+    </section>
+    <video id="video" playsinline muted></video>
+  </main>
+
+  <aside id="panel">
+    <header>
+      <h1>TariCap</h1>
+      <p class="sub">Gerak tari sebagai data, dihidupkan kembali pada avatar</p>
+    </header>
+
+    <section>
+      <h2>1. Kamera</h2>
+      <button id="btnCamera" class="primary">Mulai kamera</button>
+      <select id="cameraSelect" hidden aria-label="Pilih kamera"></select>
+      <label class="check"><input id="mirror" type="checkbox" checked /> Cermin (seperti melihat cermin)</label>
+      <div class="row">
+        <label for="modelVariant" class="inline">Model pose</label>
+        <select id="modelVariant">
+          <option value="full" selected>Full (lebih akurat)</option>
+          <option value="lite">Lite (lebih ringan)</option>
+        </select>
+      </div>
+    </section>
+
+    <section>
+      <h2>2. Sumber lain</h2>
+      <label class="file">Proses video ...
+        <input id="fileVideo" type="file" accept="video/*" />
+      </label>
+      <button id="btnSample">Muat contoh sintetis</button>
+      <label class="file">Muat rekaman JSON
+        <input id="fileJson" type="file" accept=".json,application/json" />
+      </label>
+      <div class="row">
+        <button id="btnLive">Sambung live</button>
+        <input id="wsUrl" value="ws://localhost:8765" spellcheck="false" aria-label="Alamat WebSocket" />
+      </div>
+    </section>
+
+    <section>
+      <h2>3. Rekam</h2>
+      <button id="btnRecord" class="record"><span class="dot"></span><span id="btnRecordLabel">Rekam</span> <kbd>R</kbd></button>
+      <label class="check"><input id="recordWebm" type="checkbox" checked /> Juga rekam video .webm (kedua panel)</label>
+      <p class="hint">JSON berisi landmark hasil deteksi (bukan hasil penghalusan avatar), formatnya sama dengan <code>capture/recorder.py</code>. Setelah berhenti, file terunduh dan langsung diputar.</p>
+    </section>
+
+    <section>
+      <h2>4. Pemutaran</h2>
+      <div class="row">
+        <button id="btnPlay" disabled>Putar</button>
+        <select id="speed" aria-label="Kecepatan">
+          <option value="0.25">0,25×</option>
+          <option value="0.5">0,5×</option>
+          <option value="1" selected>1×</option>
+          <option value="1.5">1,5×</option>
+          <option value="2">2×</option>
+        </select>
+        <label class="check"><input id="loop" type="checkbox" checked /> Ulang</label>
+      </div>
+      <input id="seek" type="range" min="0" max="0" value="0" disabled aria-label="Posisi rekaman" />
+      <div id="timeLabel" class="mono">0.00 / 0.00 s</div>
+    </section>
+
+    <section>
+      <h2>5. Jejak gerak</h2>
+      <div id="trailJoints" class="joints"></div>
+      <div class="row">
+        <label for="trailLength" class="inline">Panjang</label>
+        <select id="trailLength">
+          <option value="2">2 detik</option>
+          <option value="5">5 detik</option>
+          <option value="15" selected>15 detik</option>
+          <option value="inf">Tanpa batas</option>
+        </select>
+      </div>
+      <div class="row">
+        <button id="btnClearTrail">Hapus jejak <kbd>C</kbd></button>
+        <button id="btnSaveImage">Simpan gambar <kbd>S</kbd></button>
+      </div>
+    </section>
+
+    <section>
+      <h2>6. Avatar dan penghalusan</h2>
+      <label for="refine" class="inline">Kekuatan penghalusan: <strong id="refineLabel">Kuat</strong></label>
+      <input id="refine" type="range" min="0" max="2" step="1" value="2" />
+      <div class="ticks"><span>Mati</span><span>Ringan</span><span>Kuat</span></div>
+      <label class="check"><input id="showSkeleton" type="checkbox" /> Tampilkan kerangka 3D di avatar</label>
+      <label class="check"><input id="flipAxes" type="checkbox" /> Koreksi sumbu VRM</label>
+      <p class="hint">Biarkan mati untuk avatar bawaan. Nyalakan hanya jika lengan avatar lain bergerak terbalik.</p>
+      <label class="file">Muat avatar .vrm
+        <input id="fileVrm" type="file" accept=".vrm" />
+      </label>
+    </section>
+
+    <section>
+      <h2>7. Tampilan</h2>
+      <div class="row">
+        <select id="viewMode" aria-label="Mode tampilan">
+          <option value="split" selected>Berdampingan</option>
+          <option value="capture">Tangkapan saja</option>
+          <option value="avatar">Animasi saja</option>
+        </select>
+        <kbd>V</kbd>
+      </div>
+    </section>
+
+    <section>
+      <h2>Status</h2>
+      <div id="status" class="mono" role="status" aria-live="polite">Memuat ...</div>
+    </section>
+
+    <section class="keys">
+      <h2>Pintasan keyboard</h2>
+      <dl>
+        <dt><kbd>R</kbd></dt><dd>Rekam / berhenti</dd>
+        <dt><kbd>C</kbd></dt><dd>Hapus jejak</dd>
+        <dt><kbd>V</kbd></dt><dd>Ganti tampilan</dd>
+        <dt><kbd>S</kbd></dt><dd>Simpan gambar PNG</dd>
+        <dt><kbd>Spasi</kbd></dt><dd>Putar / jeda rekaman</dd>
+      </dl>
+      <p class="hint">Klik dua kali panel avatar untuk mengembalikan sudut kamera.</p>
+    </section>
+  </aside>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,4 +1,4 @@
-# TariCap
+# Montion Capture Humdig
 
 Motion capture tari dengan computer vision: kamera biasa membaca gerak penari, gerak itu disimpan sebagai data (koordinat 33 titik tubuh per frame), lalu dihidupkan kembali pada avatar 3D.
 
